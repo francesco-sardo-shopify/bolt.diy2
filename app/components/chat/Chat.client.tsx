@@ -140,6 +140,36 @@ export const ChatImpl = memo(
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
+    const [customPrompt, setCustomPrompt] = useState<string | undefined>(() => {
+      if (promptId === 'custom') {
+        return localStorage.getItem('custom_prompt') || undefined;
+      }
+
+      return undefined;
+    });
+
+    useEffect(() => {
+      if (promptId === 'custom') {
+        setCustomPrompt(localStorage.getItem('custom_prompt') || undefined);
+      } else {
+        setCustomPrompt(undefined);
+      }
+    }, [promptId]);
+
+    useEffect(() => {
+      const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'custom_prompt' && promptId === 'custom') {
+          setCustomPrompt(event.newValue || undefined);
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }, [promptId]);
+
     const {
       messages,
       isLoading,
@@ -160,6 +190,7 @@ export const ChatImpl = memo(
         files,
         promptId,
         contextOptimization: contextOptimizationEnabled,
+        customPrompt,
       },
       sendExtraMessageFields: true,
       onError: (e) => {
